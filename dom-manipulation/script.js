@@ -278,6 +278,53 @@ function syncWithServer() {
 
 setInterval(syncWithServer, 15000); // every 15 seconds
 
+async function fetchQuotesFromServer() {
+  const response = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=5");
+  const data = await response.json();
+
+  // Convert posts to quote format
+  return data.map(post => ({
+    id: post.id,
+    text: post.title,
+    category: "Server"
+  }));
+}
+
+async function syncWithServer() {
+  try {
+    const serverQuotes = await fetchQuotesFromServer();
+    const localQuotes = JSON.parse(localStorage.getItem("quotes")) || [];
+    const localById = Object.fromEntries(localQuotes.map(q => [q.id || q.text, q]));
+    const serverById = Object.fromEntries(serverQuotes.map(q => [q.id || q.text, q]));
+
+    const merged = [];
+
+    for (const key in serverById) {
+      merged.push(serverById[key]);
+      if (localById[key] && JSON.stringify(serverById[key]) !== JSON.stringify(localById[key])) {
+        notifyConflict(serverById[key], localById[key]);
+      }
+    }
+
+    for (const key in localById) {
+      if (!serverById[key]) {
+        merged.push(localById[key]);
+      }
+    }
+
+    localStorage.setItem("quotes", JSON.stringify(merged));
+    quotes = merged;
+    populateCategories();
+    showSyncStatus("Quotes synced from server");
+  } catch (error) {
+    console.error("Failed to fetch server quotes:", error);
+    showSyncStatus("Server sync failed.");
+  }
+}
+
+
+
+
 
 
 // Event Listeners
