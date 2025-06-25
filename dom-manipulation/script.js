@@ -424,6 +424,52 @@ async function syncQuotes() {
   }
 }
 
+showSyncStatus("Quotes synced with server!");
+
+async function syncQuotes() {
+  try {
+    showSyncStatus("Syncing quotes...");
+
+    const localQuotes = JSON.parse(localStorage.getItem("quotes")) || [];
+    for (const quote of localQuotes) {
+      await sendQuoteToServer(quote);
+    }
+
+    const serverQuotes = await fetchQuotesFromServer();
+
+    const localById = Object.fromEntries(localQuotes.map(q => [q.id || q.text, q]));
+    const serverById = Object.fromEntries(serverQuotes.map(q => [q.id || q.text, q]));
+
+    const merged = [];
+
+    for (const key in serverById) {
+      merged.push(serverById[key]);
+      if (
+        localById[key] &&
+        JSON.stringify(serverById[key]) !== JSON.stringify(localById[key])
+      ) {
+        notifyConflict(serverById[key], localById[key]);
+      }
+    }
+
+    for (const key in localById) {
+      if (!serverById[key]) {
+        merged.push(localById[key]);
+      }
+    }
+
+    localStorage.setItem("quotes", JSON.stringify(merged));
+    quotes = merged;
+    populateCategories();
+
+    // ✅ Exact required message
+    showSyncStatus("Quotes synced with server!");
+  } catch (error) {
+    console.error("syncQuotes error:", error);
+    showSyncStatus("Sync failed.");
+  }
+}
+
 
 
 
