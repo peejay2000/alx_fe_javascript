@@ -18,6 +18,29 @@ function loadQuotes() {
   }
 }
 
+// --- NEW: Filter Quotes Function ---
+function filterQuotes() {
+  const selected = categoryFilter.value;
+  saveSelectedCategory(selected);
+
+  const filteredQuotes = selected === "all"
+    ? quotes
+    : quotes.filter(q => q.category === selected);
+
+  if (filteredQuotes.length === 0) {
+    quoteDisplay.textContent = "No quotes available for this category.";
+    return;
+  }
+
+  // Show a random quote from the filtered list
+  const randomIndex = Math.floor(Math.random() * filteredQuotes.length);
+  const quote = filteredQuotes[randomIndex];
+  quoteDisplay.textContent = `"${quote.text}" — ${quote.category}`;
+
+  sessionStorage.setItem("lastViewedQuote", JSON.stringify(quote));
+}
+
+
 // Save quotes to localStorage
 function saveQuotes() {
   localStorage.setItem("quotes", JSON.stringify(quotes));
