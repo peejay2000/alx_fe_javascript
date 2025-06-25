@@ -225,6 +225,22 @@ function showSyncStatus(message) {
   statusEl.textContent = `${message} (Last sync: ${new Date().toLocaleTimeString()})`;
 }
 
+// Simulated fetch from a server (mocked)
+function fetchQuotesFromServer() {
+  return new Promise((resolve) => {
+    const mockServerQuotes = [
+      { id: 1, text: "Be the change you wish to see in the world.", category: "Motivation" },
+      { id: 2, text: "In the middle of difficulty lies opportunity.", category: "Wisdom" },
+      { id: 3, text: "Success usually comes to those who are too busy to be looking for it.", category: "Success" }
+    ];
+
+    // Simulate network delay
+    setTimeout(() => {
+      resolve(mockServerQuotes);
+    }, 1000);
+  });
+}
+
 
 // Event Listeners
 document.getElementById("newQuote").addEventListener("click", showRandomQuote);
