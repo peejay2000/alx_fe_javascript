@@ -242,6 +242,44 @@ function fetchQuotesFromServer() {
 }
 
 
+function syncWithServer() {
+  fetchQuotesFromServer().then(serverQuotes => {
+    const localQuotes = JSON.parse(localStorage.getItem("quotes")) || [];
+    const localById = Object.fromEntries(localQuotes.map(q => [q.id || q.text, q]));
+    const serverById = Object.fromEntries(serverQuotes.map(q => [q.id || q.text, q]));
+
+    const merged = [];
+
+    // Server data takes precedence
+    for (const key in serverById) {
+      merged.push(serverById[key]);
+      if (localById[key] && JSON.stringify(serverById[key]) !== JSON.stringify(localById[key])) {
+        notifyConflict(serverById[key], localById[key]);
+      }
+    }
+
+    // Add any local-only quotes
+    for (const key in localById) {
+      if (!serverById[key]) {
+        merged.push(localById[key]);
+      }
+    }
+
+    localStorage.setItem("quotes", JSON.stringify(merged));
+    quotes = merged;
+    populateCategories();
+    showSyncStatus("Quotes synced from server");
+  }).catch(error => {
+    console.error("Sync failed:", error);
+    showSyncStatus("Failed to sync with server.");
+  });
+}
+
+
+setInterval(syncWithServer, 15000); // every 15 seconds
+
+
+
 // Event Listeners
 document.getElementById("newQuote").addEventListener("click", showRandomQuote);
 document.getElementById("categoryFilter").addEventListener("change", () => {
