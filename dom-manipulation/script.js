@@ -322,6 +322,64 @@ async function syncWithServer() {
   }
 }
 
+async function sendQuoteToServer(quote) {
+  try {
+    const response = await fetch("https://jsonplaceholder.typicode.com/posts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        title: quote.text,
+        body: quote.category,
+        userId: 1
+      })
+    });
+
+    const result = await response.json();
+    console.log("Quote sent to server:", result);
+    showSyncStatus(`Quote "${quote.text}" sent to server`);
+  } catch (error) {
+    console.error("Error sending quote to server:", error);
+    showSyncStatus("Failed to send quote to server");
+  }
+}
+
+
+async function addQuote() {
+  const text = document.getElementById("newQuoteText").value.trim();
+  const category = document.getElementById("newQuoteCategory").value.trim();
+
+  if (!text || !category) {
+    alert("Please enter both a quote and category.");
+    return;
+  }
+
+  const newQuote = {
+    id: Date.now(), // temporary ID
+    text,
+    category
+  };
+
+  quotes.push(newQuote);
+  saveQuotes();
+  populateCategories();
+  document.getElementById("newQuoteText").value = "";
+  document.getElementById("newQuoteCategory").value = "";
+  alert("Quote added!");
+
+  await sendQuoteToServer(newQuote); // ✅ Simulate pushing to server
+}
+
+
+function showSyncStatus(message) {
+  const statusEl = document.getElementById("syncStatus");
+  if (statusEl) {
+    statusEl.textContent = `${message} (${new Date().toLocaleTimeString()})`;
+  }
+}
+
+
 
 
 
