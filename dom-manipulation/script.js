@@ -174,6 +174,57 @@ function loadLastViewedQuote() {
     quoteDisplay.textContent = `"${quote.text}" — ${quote.category}`;
   }
 }
+// Simulated server quotes (as if fetched from remote)
+const mockServerQuotes = [
+  { id: 1, text: "Be the change you wish to see in the world.", category: "Motivation" },
+  { id: 2, text: "In the middle of difficulty lies opportunity.", category: "Wisdom" },
+  { id: 3, text: "Success usually comes to those who are too busy to be looking for it.", category: "Success" }
+];
+
+// Merge server quotes with local, preferring server values for same IDs
+function syncWithServer() {
+  const localQuotes = JSON.parse(localStorage.getItem("quotes")) || [];
+  const localById = Object.fromEntries(localQuotes.map(q => [q.id || q.text, q]));
+  const serverById = Object.fromEntries(mockServerQuotes.map(q => [q.id || q.text, q]));
+
+  const merged = [];
+
+  // Merge server and local - server wins if there's a conflict
+  for (const key in serverById) {
+    merged.push(serverById[key]);
+    if (localById[key] && JSON.stringify(serverById[key]) !== JSON.stringify(localById[key])) {
+      notifyConflict(serverById[key], localById[key]);
+    }
+  }
+
+  // Add any local-only quotes
+  for (const key in localById) {
+    if (!serverById[key]) {
+      merged.push(localById[key]);
+    }
+  }
+
+  localStorage.setItem("quotes", JSON.stringify(merged));
+  quotes = merged;
+  populateCategories();
+  showSyncStatus("Quotes synced from server");
+}
+
+// Simulate periodic polling (every 15 seconds)
+setInterval(syncWithServer, 15000);
+
+function notifyConflict(serverQuote, localQuote) {
+  const msg = `Conflict resolved: Server version for "${serverQuote.text}" overwritten local copy.`;
+  console.warn(msg);
+  showSyncStatus(msg);
+}
+
+
+function showSyncStatus(message) {
+  const statusEl = document.getElementById("syncStatus");
+  statusEl.textContent = `${message} (Last sync: ${new Date().toLocaleTimeString()})`;
+}
+
 
 // Event Listeners
 document.getElementById("newQuote").addEventListener("click", showRandomQuote);
